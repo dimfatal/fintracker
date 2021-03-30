@@ -27,17 +27,13 @@ object Settings {
       version := (version in ThisBuild).value,
       scalafmtOnCompile := true,
       addCompilerPlugin("org.typelevel" %% "kind-projector" % kindProjector cross CrossVersion.full)
-      //testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
-      //resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
     )
 
   //val higherKinds =
   lazy val projectSettings = Seq(
     organization := "dimfatal",
-    //licenses ++= ,
-    //homepage := Some(url("https://github.com/)),
     developers := List(
-      Developer("dimfatal", "Dmitry Aleksandrov", "aleksandrov.d89@gmail.com", url("https://github.com/mypage/"))
+      Developer("dimfatal", "Dmitry Aleksandrov", "aleksandrov.d89@gmail.com", url("https://github.com/dimfatal"))
     )
   )
 }
