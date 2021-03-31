@@ -1,10 +1,11 @@
-package tcsInterpreters
+package bot.memoryStorage
 
 import cats.Functor
 import cats.effect.ConcurrentEffect
 import cats.effect.concurrent.Ref
 import cats.implicits._
 import tcs4sclient.model.domain.user.AccountType
+import tcsInterpreters.AccountId
 
 trait AccountsStorage[F[_]] {
   def get(accountType: AccountType)(implicit f: Functor[F]): F[String]
@@ -35,9 +36,6 @@ object InMemoryAccountsStorage {
       new InMemoryAccountsStorage[F](ref)
     }
 }
-
-//todo move it from here
-final case class AccountId(id: String) extends AnyVal
 
 final case class AccountNotFoundError(message: String) extends Throwable // todo need review it after adding switch tinkoff clients feature
 

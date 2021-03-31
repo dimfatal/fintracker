@@ -9,11 +9,11 @@ import tcs4sclient.model.domain.market.Ticker
 import tcs4sclient.model.domain.user.operations.Operation
 import tcsInterpreters.portfolioInfo.PortfolioStockPrices._
 import tcsInterpreters.portfolioInfo.validation._
-import tcsInterpreters.{ AccountId, InMemoryAccountsStorage }
+import tcsInterpreters.AccountId
 
 import java.time.OffsetDateTime
 
-class PortfolioStockPrices[F[_]: InMemoryAccountsStorage](implicit operationsApi: TradeHistoryApi[F], portfolioApi: PortfolioApi[F]) {
+class PortfolioStockPrices[F[_]](implicit operationsApi: TradeHistoryApi[F], portfolioApi: PortfolioApi[F]) {
 
   private implicit val stockValidatorEitherInterpreter: StockValidator[Either[StockValidation, *]] =
     StockValidatorInterpreter.stockValidator[Either[StockValidation, *], StockValidation](identity)

@@ -11,9 +11,9 @@ import tcsInterpreters.portfolioInfo.{ AccountsMap, PeriodQuery, PortfolioStockP
 
 trait TinkoffInvestPrograms[F[_], S[_]] {
   def accountsMap: S[Map[AccountType, String]]
-  def positionsInfo(accountType: AccountType)(implicit store: InMemoryAccountsStorage[F]): S[List[String]]
-  def portfolioStockPrices(accountType: AccountType, ticker: Ticker)(implicit store: InMemoryAccountsStorage[F]): S[String]
-  def profitFromPeriod(accountType: AccountType, figi: Figi, periodQuery: PeriodQuery)(implicit store: InMemoryAccountsStorage[F]): S[String]
+  def positionsInfo(account: AccountId): S[List[String]]
+  def portfolioStockPrices(account: AccountId, ticker: Ticker): S[String]
+  def profitFromPeriod(account: AccountId, figi: Figi, periodQuery: PeriodQuery): S[String]
 }
 
 trait StreamingTinkoffInvest[F[_]] extends TinkoffInvestPrograms[F, Stream[F, *]]
@@ -27,30 +27,18 @@ object TinkoffInvest {
   def dsl[F[_]: TinkoffClient: Sync]: StreamingTinkoffInvest[F] =
     new StreamingTinkoffInvest[F] {
 
-      import AccountTypeStorageSyntax._
       import tcs4sclient.api.methods.TinkoffInvestApi._
 
-      override def positionsInfo(account: AccountType)(implicit store: InMemoryAccountsStorage[F]): Stream[F, List[String]] =
-        Stream
-          .eval(account.id)
-          .evalMap(new PositionsInfoString[F].display)
+      override def positionsInfo(account: AccountId): Stream[F, List[String]] =
+        Stream.eval(new PositionsInfoString[F].display(account))
 
-      override def portfolioStockPrices(account: AccountType, ticker: Ticker)(implicit store: InMemoryAccountsStorage[F]): Stream[F, String] =
-        Stream
-          .eval(account.id)
-          .map(new PortfolioStockPrices[F].calculate(_, ticker))
-          .flatten
+      override def portfolioStockPrices(account: AccountId, ticker: Ticker): Stream[F, String] =
+        new PortfolioStockPrices[F].calculate(account, ticker)
 
-      override def profitFromPeriod(account: AccountType, figi: Figi, periodQuery: PeriodQuery)(implicit
-        store: InMemoryAccountsStorage[F]
-      ): Stream[F, String] =
-        Stream
-          .eval(account.id)
-          .map(new PortfolioStockProfit[F].calculate(_, figi, periodQuery))
-          .flatten
+      override def profitFromPeriod(account: AccountId, figi: Figi, periodQuery: PeriodQuery): Stream[F, String] =
+        new PortfolioStockProfit[F].calculate(account, figi, periodQuery)
 
       override def accountsMap: Stream[F, Map[AccountType, String]] = AccountsMap[F]().make()
-
     }
 
   implicit def marketInfo[F[_]: TinkoffClient]: TinkoffMarketInfo[F] = new TinkoffMarketInfo[F] {

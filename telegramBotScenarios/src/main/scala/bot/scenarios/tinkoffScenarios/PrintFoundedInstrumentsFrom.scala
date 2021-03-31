@@ -19,7 +19,6 @@ object PrintFoundedInstrumentsFrom {
           _.map(_.instruments)
             .map(_.map(i => (i.ticker, i.name, i.figi)))
             .map(_.mkString("\n"))
-            //.evalMap(chat.send(_))
             .compile
             .toList
             .map(_.last)

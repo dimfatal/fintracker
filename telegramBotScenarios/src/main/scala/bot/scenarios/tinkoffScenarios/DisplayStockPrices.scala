@@ -1,8 +1,9 @@
 package bot.scenarios
 package tinkoffScenarios
 
+import bot.memoryStorage.AccountTypeStorageSyntax.AccountTypeIdOps
 import bot.scenarios.ScenariosLogicInterpreter.checkParam
-import bot.memoryStorage.TinkoffTokenStorage
+import bot.memoryStorage.{ InMemoryAccountsStorage, TinkoffTokenStorage }
 import bot.scenarios.tinkoffProgramsService.ScenarioService.{ TinkoffService, TinkoffServiceLogic }
 import bot.scenarios.tinkoffProgramsService.StockPrices
 import bot.scenarios.tinkoffScenarios.validation._
@@ -16,7 +17,6 @@ import fs2._
 import org.http4s.client.Client
 import tcs4sclient.model.domain.market.Ticker
 import tcs4sclient.model.domain.user.{ AccountType, Tinkoff }
-import tcsInterpreters.InMemoryAccountsStorage
 
 object DisplayStockPrices {
 
@@ -29,8 +29,8 @@ object DisplayStockPrices {
     account: AccountType = Tinkoff
   ): Scenario[F, Unit] = {
 
-    def serviceFromTicker: Ticker => TinkoffServiceLogic[StockPrices] =
-      ticker => TinkoffServiceLogic.stockPrices(account, ticker)
+    def serviceFromTicker: Ticker => F[TinkoffServiceLogic[StockPrices]] =
+      ticker => account.id.map(TinkoffServiceLogic.stockPrices(_, ticker))
 
     Scenario.eval(semaphore.available).flatMap { i =>
       if (i > 0) {
@@ -45,7 +45,7 @@ object DisplayStockPrices {
   }
 
   private def calculate[F[_]: Sync: TelegramClient: Client: InMemoryAccountsStorage](chat: Chat, userInput: Array[String], token: String)(
-    service: Ticker => TinkoffServiceLogic[StockPrices]
+    service: Ticker => F[TinkoffServiceLogic[StockPrices]]
   ): F[Unit] =
     checkParam(chat, userInput)
       .map(
@@ -57,7 +57,7 @@ object DisplayStockPrices {
       .flatten
 
   private def runService[F[_]: Sync: TelegramClient: Client: InMemoryAccountsStorage](chat: Chat, ticker: Ticker, token: String)(
-    service: Ticker => TinkoffServiceLogic[StockPrices]
+    service: Ticker => F[TinkoffServiceLogic[StockPrices]]
   ): F[Unit] =
     TickerValidator
       .validate(ticker, token)
@@ -76,10 +76,7 @@ object DisplayStockPrices {
 
   private def stockPrices[F[_]: Sync: Client: InMemoryAccountsStorage](
     token: String,
-    service: TinkoffServiceLogic[StockPrices]
-  ): Stream[F, String] = {
-    implicit val s: TinkoffServiceLogic[StockPrices] = service
-    new TinkoffService[StockPrices].run(token).map(_.a)
-  }
+    service: F[TinkoffServiceLogic[StockPrices]]
+  ) = Stream.eval(service).map(implicit s => new TinkoffService[StockPrices].run(token).map(_.a)).flatten
 
 }

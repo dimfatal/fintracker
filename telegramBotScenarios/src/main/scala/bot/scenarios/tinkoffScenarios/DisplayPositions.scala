@@ -1,18 +1,19 @@
 package bot.scenarios
 package tinkoffScenarios
 
-import bot.memoryStorage.TinkoffTokenStorage
-import bot.scenarios.tinkoffProgramsService.ScenarioService.TinkoffService
+import bot.memoryStorage.AccountTypeStorageSyntax.AccountTypeIdOps
+import bot.memoryStorage.{ InMemoryAccountsStorage, TinkoffTokenStorage }
+import bot.scenarios.tinkoffProgramsService.PositionsList
 import bot.scenarios.tinkoffProgramsService.ScenarioService.TinkoffServiceLogic._
-import bot.scenarios.tinkoffProgramsService.{ PositionsList, ScenarioService }
+import bot.scenarios.tinkoffProgramsService.ScenarioService._
 import canoe.api.{ chatApi, Scenario, TelegramClient }
 import canoe.syntax._
 import cats.effect.Sync
 import cats.effect.concurrent.Semaphore
 import cats.implicits._
+import fs2._
 import org.http4s.client.Client
 import tcs4sclient.model.domain.user.{ AccountType, Tinkoff }
-import tcsInterpreters.InMemoryAccountsStorage
 
 object DisplayPositions {
 
@@ -22,9 +23,12 @@ object DisplayPositions {
     account: AccountType = Tinkoff
   ): Scenario[F, Unit] = {
 
-    implicit val serviceLogic: ScenarioService.TinkoffServiceLogic[PositionsList] = positionsList(account)
-
-    def positions = (token: String) => new TinkoffService[PositionsList].run(token).map(_.a)
+    def positions = (token: String) =>
+      Stream
+        .eval(account.id)
+        .map(positionsList)
+        .map(implicit logic => new TinkoffService[PositionsList].run(token).map(_.a))
+        .flatten
 
     Scenario.eval(semaphore.available).flatMap { i =>
       if (i > 0) {

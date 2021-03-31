@@ -6,7 +6,7 @@ import tcs4sclient.model.domain.market.Figi
 import tcs4sclient.model.domain.user.operations.Operation
 import tcs4sclient.model.domain.user.portfolio.Position
 import tcsInterpreters.portfolioInfo.validation.{ StockValidation, TradeHistoryExistenceValidator, TradeHistoryExistenceValidatorInterpreter }
-import tcsInterpreters.{ AccountId, InMemoryAccountsStorage }
+import tcsInterpreters.AccountId
 
 import java.time.OffsetDateTime
 
@@ -16,7 +16,7 @@ object DateTimePeriod {
   val allTime: PeriodQuery = PeriodQuery(OffsetDateTime.now.minusYears(20), OffsetDateTime.now)
 } //todo move it from here
 
-class PortfolioStockProfit[F[_]: InMemoryAccountsStorage](implicit tradeHistoryApi: TradeHistoryApi[F], portfolioApi: PortfolioApi[F]) {
+class PortfolioStockProfit[F[_]](implicit tradeHistoryApi: TradeHistoryApi[F], portfolioApi: PortfolioApi[F]) {
 
   private implicit val tradeHistoryExistenceValidator: TradeHistoryExistenceValidator[Either[StockValidation, *]] =
     TradeHistoryExistenceValidatorInterpreter.operationHistoryExistenceValidator[Either[StockValidation, *], StockValidation](identity)

@@ -1,19 +1,18 @@
 package bot
 
-import bot.memoryStorage.TokenStorage
+import bot.memoryStorage.{ InMemoryAccountsStorage, TokenStorage }
 import bot.scenarios.tinkoffScenarios.{ Accounts, CheckStockProfitFromPeriod, DisplayPositions, DisplayStockPrices, Start }
 import canoe.api.{ Bot, TelegramClient }
 import cats.effect.concurrent.Semaphore
 import cats.effect.{ ExitCode, IO, IOApp }
 import fs2.Stream
 import org.http4s.client.blaze.BlazeClientBuilder
-import tcsInterpreters.InMemoryAccountsStorage
 
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 
 object TelegramBot extends IOApp {
-  private def telegramBotToken: String = System.getenv("BOT_TOKEN") //todo get it from env param or config file
+  private def telegramBotToken: String = System.getenv("BOT_TOKEN")
 
   override def run(args: List[String]): IO[ExitCode] = {
 
@@ -35,6 +34,7 @@ object TelegramBot extends IOApp {
                     CheckStockProfitFromPeriod.run(sem, tokenStore),
                     DisplayPositions.displayPositions(sem, tokenStore),
                     DisplayStockPrices.run(sem, tokenStore)
+                    //  PrintFoundedInstrumentsFrom.printFoundedInstrumentsFrom(TinkoffInvest.marketInfo)
                   )
               }
             }

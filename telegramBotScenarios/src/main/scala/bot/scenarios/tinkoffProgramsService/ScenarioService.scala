@@ -1,12 +1,13 @@
 package bot.scenarios.tinkoffProgramsService
 
+import bot.memoryStorage.InMemoryAccountsStorage
 import cats.effect.Sync
 import fs2.Stream
 import org.http4s.client.Client
 import tcs4sclient.api.client.{ Http4sTinkoffClientBuilder, TinkoffClient }
 import tcs4sclient.model.domain.market.{ MarketInstrument, Ticker }
 import tcs4sclient.model.domain.user.AccountType
-import tcsInterpreters.InMemoryAccountsStorage
+import tcsInterpreters.AccountId
 import tcsInterpreters.portfolioInfo.PeriodQuery
 
 final case class AccountsMap(a: Map[AccountType, String])
@@ -25,17 +26,17 @@ object ScenarioService {
       override def run[F[_]](F: TinkoffBotLogic[F]): Stream[F, AccountsMap] = F.accounts
     }
 
-    implicit def positionsList(account: AccountType): TinkoffServiceLogic[PositionsList] =
+    implicit def positionsList(account: AccountId): TinkoffServiceLogic[PositionsList] =
       new TinkoffServiceLogic[PositionsList] {
         override def run[F[_]](F: TinkoffBotLogic[F]): Stream[F, PositionsList] = F.portfolioPositions(account)
       }
 
-    implicit def stockProfit(account: AccountType, ticker: Ticker, periodQuery: PeriodQuery): TinkoffServiceLogic[StockProfitMap] =
+    implicit def stockProfit(account: AccountId, ticker: Ticker, periodQuery: PeriodQuery): TinkoffServiceLogic[StockProfitMap] =
       new TinkoffServiceLogic[StockProfitMap] {
         override def run[F[_]](F: TinkoffBotLogic[F]): Stream[F, StockProfitMap] = F.stockProfit(account, ticker, periodQuery)
       }
 
-    implicit def stockPrices(account: AccountType, ticker: Ticker): TinkoffServiceLogic[StockPrices] =
+    implicit def stockPrices(account: AccountId, ticker: Ticker): TinkoffServiceLogic[StockPrices] =
       new TinkoffServiceLogic[StockPrices] {
         override def run[F[_]](F: TinkoffBotLogic[F]): Stream[F, StockPrices] = F.stockPrices(account, ticker)
       }

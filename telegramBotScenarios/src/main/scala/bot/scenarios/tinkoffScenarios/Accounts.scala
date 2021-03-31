@@ -1,12 +1,12 @@
 package bot.scenarios
 package tinkoffScenarios
 
+import bot.memoryStorage.InMemoryAccountsStorage
 import canoe.api.{ chatApi, Scenario, TelegramClient }
 import canoe.syntax._
 import cats.effect.Sync
 import cats.effect.concurrent.Semaphore
 import cats.implicits._
-import tcsInterpreters.InMemoryAccountsStorage
 
 object Accounts {
 

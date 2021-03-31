@@ -1,8 +1,9 @@
 package bot.scenarios
 package tinkoffScenarios
 
+import bot.memoryStorage.AccountTypeStorageSyntax.AccountTypeIdOps
 import bot.scenarios.ScenariosLogicInterpreter.checkParam
-import bot.memoryStorage.TinkoffTokenStorage
+import bot.memoryStorage.{ InMemoryAccountsStorage, TinkoffTokenStorage }
 import bot.scenarios.tinkoffProgramsService.ScenarioService.{ TinkoffService, TinkoffServiceLogic }
 import bot.scenarios.tinkoffProgramsService.StockProfitMap
 import bot.scenarios.tinkoffScenarios.validation._
@@ -15,7 +16,6 @@ import cats.implicits._
 import org.http4s.client.Client
 import tcs4sclient.model.domain.market.{ MarketInstrument, Ticker }
 import tcs4sclient.model.domain.user.{ AccountType, Tinkoff }
-import tcsInterpreters.InMemoryAccountsStorage
 import tcsInterpreters.portfolioInfo.DateTimePeriod._
 import tcsInterpreters.portfolioInfo.PeriodQuery
 
@@ -28,11 +28,11 @@ object CheckStockProfitFromPeriod {
     semaphore: Semaphore[F],
     tokenStore: TinkoffTokenStorage[F],
     periodQuery: PeriodQuery = allTime,
-    accountType: AccountType = Tinkoff
+    account: AccountType = Tinkoff
   ): Scenario[F, Unit] = {
 
-    def serviceFromTicker: Ticker => TinkoffServiceLogic[StockProfitMap] =
-      ticker => TinkoffServiceLogic.stockProfit(accountType, ticker, periodQuery)
+    def serviceFromTicker: Ticker => F[TinkoffServiceLogic[StockProfitMap]] =
+      ticker => account.id.map(TinkoffServiceLogic.stockProfit(_, ticker, periodQuery))
 
     Scenario.eval(semaphore.available).flatMap { i =>
       if (i > 0) {
@@ -48,14 +48,16 @@ object CheckStockProfitFromPeriod {
 
   private def profitCalculator[F[_]: Sync: Client: InMemoryAccountsStorage](
     token: String,
-    service: TinkoffServiceLogic[StockProfitMap]
-  ): fs2.Stream[F, Map[MarketInstrument, String]] = {
-    implicit val s: TinkoffServiceLogic[StockProfitMap] = service
-    new TinkoffService[StockProfitMap].run(token).map(_.a)
-  }
+    service: F[TinkoffServiceLogic[StockProfitMap]]
+  ): fs2.Stream[F, Map[MarketInstrument, String]] =
+    fs2
+      .Stream
+      .eval(service)
+      .map(implicit s => new TinkoffService[StockProfitMap].run(token).map(_.a))
+      .flatten
 
   private def runService[F[_]: Sync: TelegramClient: Client: InMemoryAccountsStorage](chat: Chat, ticker: Ticker, token: String)(
-    service: Ticker => TinkoffServiceLogic[StockProfitMap]
+    service: Ticker => F[TinkoffServiceLogic[StockProfitMap]]
   ): F[Unit] =
     TickerValidator
       .validate(ticker, token)
@@ -90,7 +92,7 @@ object CheckStockProfitFromPeriod {
     } else Sync[F].delay(instruments.last._2)
 
   private def calculate[F[_]: Sync: TelegramClient: Client: InMemoryAccountsStorage](chat: Chat, userInput: Array[String], token: String)(
-    service: Ticker => TinkoffServiceLogic[StockProfitMap]
+    service: Ticker => F[TinkoffServiceLogic[StockProfitMap]]
   ): F[Unit] =
     checkParam(chat, userInput)
       .map(

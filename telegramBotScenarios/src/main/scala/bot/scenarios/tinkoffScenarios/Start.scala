@@ -1,6 +1,6 @@
 package bot.scenarios.tinkoffScenarios
 
-import bot.memoryStorage.TinkoffTokenStorage
+import bot.memoryStorage.{ InMemoryAccountsStorage, TinkoffTokenStorage }
 import bot.scenarios.tinkoffProgramsService.AccountsMap
 import bot.scenarios.tinkoffProgramsService.ScenarioService.TinkoffService
 import canoe.api.{ chatApi, messageApi, Scenario, TelegramClient }
@@ -8,7 +8,6 @@ import canoe.syntax._
 import cats.effect.Sync
 import cats.effect.concurrent.Semaphore
 import org.http4s.client.Client
-import tcsInterpreters.InMemoryAccountsStorage
 
 object Start {
 
