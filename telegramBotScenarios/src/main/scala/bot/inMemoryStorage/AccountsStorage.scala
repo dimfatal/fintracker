@@ -1,4 +1,4 @@
-package bot.memoryStorage
+package bot.inMemoryStorage
 
 import cats.Functor
 import cats.effect.ConcurrentEffect

@@ -1,4 +1,4 @@
-package bot.memoryStorage
+package bot.inMemoryStorage
 
 import cats.implicits._
 import cats.Functor

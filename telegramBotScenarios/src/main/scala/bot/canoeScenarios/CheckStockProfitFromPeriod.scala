@@ -1,23 +1,22 @@
-package bot.scenarios
-package tinkoffScenarios
+package bot.canoeScenarios
 
-import bot.memoryStorage.AccountTypeStorageSyntax.AccountTypeIdOps
-import bot.scenarios.ScenariosLogicInterpreter.checkParam
-import bot.memoryStorage.{ InMemoryAccountsStorage, TinkoffTokenStorage }
-import bot.scenarios.tinkoffProgramsService.ScenarioService.{ TinkoffService, TinkoffServiceLogic }
-import bot.scenarios.tinkoffProgramsService.StockProfitMap
-import bot.scenarios.tinkoffScenarios.validation._
+import bot.inMemoryStorage.AccountTypeStorageSyntax.AccountTypeIdOps
+import bot.inMemoryStorage.{InMemoryAccountsStorage, TinkoffTokenStorage}
+import bot.tinkoff.StockProfitMap
+import ScenariosLogicInterpreter.checkParam
+import bot.canoeScenarios.validation.{TickerValidation, TickerValidator, TickerValidatorInterpreter}
+import bot.tinkoff.TinkoffInvestPrograms.{TinkoffInvestLogic, TinkoffService}
 import canoe.api._
 import canoe.models.Chat
 import canoe.syntax._
 import cats.effect.concurrent.Semaphore
-import cats.effect.{ ConcurrentEffect, Sync }
-import cats.implicits._
+import cats.effect.{ConcurrentEffect, Sync}
 import org.http4s.client.Client
-import tcs4sclient.model.domain.market.{ MarketInstrument, Ticker }
-import tcs4sclient.model.domain.user.{ AccountType, Tinkoff }
-import tcsInterpreters.portfolioInfo.DateTimePeriod._
+import tcs4sclient.model.domain.market.{MarketInstrument, Ticker}
+import tcs4sclient.model.domain.user.{AccountType, Tinkoff}
+import tcsInterpreters.portfolioInfo.DateTimePeriod.allTime
 import tcsInterpreters.portfolioInfo.PeriodQuery
+import cats.implicits._
 
 object CheckStockProfitFromPeriod {
 
@@ -31,8 +30,8 @@ object CheckStockProfitFromPeriod {
     account: AccountType = Tinkoff
   ): Scenario[F, Unit] = {
 
-    def serviceFromTicker: Ticker => F[TinkoffServiceLogic[StockProfitMap]] =
-      ticker => account.id.map(TinkoffServiceLogic.stockProfit(_, ticker, periodQuery))
+    def serviceFromTicker: Ticker => F[TinkoffInvestLogic[StockProfitMap]] =
+      ticker => account.id.map(TinkoffInvestLogic.stockProfit(_, ticker, periodQuery))
 
     Scenario.eval(semaphore.available).flatMap { i =>
       if (i > 0) {
@@ -48,7 +47,7 @@ object CheckStockProfitFromPeriod {
 
   private def profitCalculator[F[_]: Sync: Client: InMemoryAccountsStorage](
     token: String,
-    service: F[TinkoffServiceLogic[StockProfitMap]]
+    service: F[TinkoffInvestLogic[StockProfitMap]]
   ): fs2.Stream[F, Map[MarketInstrument, String]] =
     fs2
       .Stream
@@ -57,7 +56,7 @@ object CheckStockProfitFromPeriod {
       .flatten
 
   private def runService[F[_]: Sync: TelegramClient: Client: InMemoryAccountsStorage](chat: Chat, ticker: Ticker, token: String)(
-    service: Ticker => F[TinkoffServiceLogic[StockProfitMap]]
+    service: Ticker => F[TinkoffInvestLogic[StockProfitMap]]
   ): F[Unit] =
     TickerValidator
       .validate(ticker, token)
@@ -92,7 +91,7 @@ object CheckStockProfitFromPeriod {
     } else Sync[F].delay(instruments.last._2)
 
   private def calculate[F[_]: Sync: TelegramClient: Client: InMemoryAccountsStorage](chat: Chat, userInput: Array[String], token: String)(
-    service: Ticker => F[TinkoffServiceLogic[StockProfitMap]]
+    service: Ticker => F[TinkoffInvestLogic[StockProfitMap]]
   ): F[Unit] =
     checkParam(chat, userInput)
       .map(

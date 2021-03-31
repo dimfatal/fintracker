@@ -1,9 +1,10 @@
-package bot.scenarios.tinkoffScenarios
+package bot.canoeScenarios
 
-import bot.memoryStorage.{ InMemoryAccountsStorage, TinkoffTokenStorage }
-import bot.scenarios.tinkoffProgramsService.AccountsMap
-import bot.scenarios.tinkoffProgramsService.ScenarioService.TinkoffService
-import canoe.api.{ chatApi, messageApi, Scenario, TelegramClient }
+import bot.inMemoryStorage.{InMemoryAccountsStorage, TinkoffTokenStorage}
+import bot.tinkoff.AccountsMap
+import bot.tinkoff.TinkoffInvestPrograms.TinkoffService
+import canoe.syntax.{command, textMessage}
+import canoe.api.{Scenario, TelegramClient, chatApi, messageApi}
 import canoe.syntax._
 import cats.effect.Sync
 import cats.effect.concurrent.Semaphore

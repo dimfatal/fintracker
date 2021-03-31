@@ -1,18 +1,19 @@
-package bot.scenarios.tinkoffProgramsService
+package bot
 
-import bot.memoryStorage.InMemoryAccountsStorage
+import bot.inMemoryStorage.InMemoryAccountsStorage
+import bot.tinkoff.{AccountsMap, PositionsList, StockPrices, StockProfitMap}
 import canoe.api.Scenario
 import cats.effect.Sync
+import cats.implicits._
+import fs2.Stream
 import tcs4sclient.api.client.TinkoffClient
-import tcs4sclient.model.domain.market.{ Figi, Ticker }
-import tcsInterpreters.TinkoffInvest.{ dsl, marketInfo }
+import tcs4sclient.model.domain.market.{Figi, Ticker}
+import tcsInterpreters.AccountId
+import tcsInterpreters.TinkoffInvest.{dsl, marketInfo}
 import tcsInterpreters.portfolioInfo.DateTimePeriod.allTime
 import tcsInterpreters.portfolioInfo.PeriodQuery
-import fs2.Stream
-import tcsInterpreters.AccountId
-import cats.implicits._
 
-trait TinkoffBotLogic[F[_]] {
+trait BotLogic[F[_]] {
   def start: Scenario[F, Unit]                         // todo make it
   def accounts: Stream[F, AccountsMap]
   def stockProfit(account: AccountId, ticker: Ticker, periodQuery: PeriodQuery = allTime): Stream[F, StockProfitMap]
@@ -21,8 +22,8 @@ trait TinkoffBotLogic[F[_]] {
   def findMarketInstrumentsByTicker: Scenario[F, Unit] // todo make it
 }
 
-object TinkoffBotLogicInterpreter {
-  def apply[F[_]: Sync: TinkoffClient: InMemoryAccountsStorage]: TinkoffBotLogic[F] = new TinkoffBotLogic[F] {
+object BotLogicInterpreter {
+  def apply[F[_]: Sync: TinkoffClient: InMemoryAccountsStorage]: BotLogic[F] = new BotLogic[F] {
 
     import fs2.Stream
     override def start: Scenario[F, Unit] = ???

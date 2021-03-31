@@ -1,8 +1,7 @@
-package bot.scenarios
-package tinkoffScenarios
+package bot.canoeScenarios
 
-import canoe.api.{ chatApi, Scenario, TelegramClient }
-import canoe.syntax.{ command, textContent }
+import canoe.api._
+import canoe.syntax._
 import cats.effect.Sync
 import tcs4sclient.model.domain.market.Ticker
 import tcsInterpreters.TinkoffMarketInfo

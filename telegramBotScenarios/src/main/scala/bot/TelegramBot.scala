@@ -1,10 +1,10 @@
 package bot
 
-import bot.memoryStorage.{ InMemoryAccountsStorage, TokenStorage }
-import bot.scenarios.tinkoffScenarios.{ Accounts, CheckStockProfitFromPeriod, DisplayPositions, DisplayStockPrices, Start }
-import canoe.api.{ Bot, TelegramClient }
+import bot.inMemoryStorage.{InMemoryAccountsStorage, TokenStorage}
+import bot.canoeScenarios._
+import canoe.api.{Bot, TelegramClient}
 import cats.effect.concurrent.Semaphore
-import cats.effect.{ ExitCode, IO, IOApp }
+import cats.effect.{ExitCode, IO, IOApp}
 import fs2.Stream
 import org.http4s.client.blaze.BlazeClientBuilder
 

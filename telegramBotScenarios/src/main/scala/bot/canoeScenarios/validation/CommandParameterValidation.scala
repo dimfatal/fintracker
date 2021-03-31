@@ -1,4 +1,4 @@
-package bot.scenarios.tinkoffScenarios.validation
+package bot.canoeScenarios.validation
 
 import cats.ApplicativeError
 import cats.implicits._

@@ -1,7 +1,7 @@
-package bot.scenarios
+package bot.canoeScenarios
 
-import bot.scenarios.tinkoffScenarios.validation._
-import canoe.api.{ chatApi, Scenario, TelegramClient }
+import bot.canoeScenarios.validation.{CommandParameter, CommandParameterValidation, CommandParameterValidator, CommandParameterValidatorInterpreter}
+import canoe.api.{Scenario, TelegramClient, chatApi}
 import canoe.models.Chat
 import canoe.syntax._
 import cats.effect.Sync
