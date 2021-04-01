@@ -9,6 +9,7 @@ import canoe.syntax._
 import cats.effect.Sync
 import cats.effect.concurrent.Semaphore
 import org.http4s.client.Client
+import cats.implicits._
 
 object Start {
 
@@ -23,8 +24,16 @@ object Start {
       _            <- Scenario.eval(chat.send("enter tinkoff api token (after you send the message it will be deleted)"))
       tokenMessage <- Scenario.expect(textMessage)
       _            <- Scenario.eval(tokenStore.save(tokenMessage.text))
-      saved         = accountsMap(tokenMessage.text).evalMap(accounts => accountStore.save(accounts.a)).compile.drain
-      _            <- Scenario.eval(saved) >> Scenario.eval(tokenMessage.delete) >> Scenario.eval(semaphore.release)
+      _            <- Scenario.eval(accountsMap(tokenMessage.text).attempt.map(
+        _.fold(
+          er => Scenario.eval(chat.send("problem while trying to authorize, make sure the token you provided is valid ")) >> Scenario.done,// todo logging this error
+          acc => Scenario.eval(accountStore.save(acc.a)) >> Scenario.eval(tokenMessage.delete) >> Scenario.eval(semaphore.release)
+        )
+      )
+        .compile
+        .toList.map(_.head)).flatten
+
+
     } yield ()
   }
 }
