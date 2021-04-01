@@ -4,7 +4,7 @@ import canoe.api.{Scenario, TelegramClient, chatApi}
 import canoe.syntax._
 import cats.effect.Sync
 
-object HelpScenario {
+object Help {
   def run[F[_]: Sync: TelegramClient]: Scenario[F, Unit] =
     for {
       chat <- Scenario.expect(command("h").chat)
