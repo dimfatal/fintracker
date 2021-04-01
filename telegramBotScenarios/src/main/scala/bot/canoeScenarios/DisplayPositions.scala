@@ -31,7 +31,7 @@ object DisplayPositions {
     Scenario.eval(semaphore.available).flatMap { i =>
       if (i > 0) {
         for {
-          chat      <- Scenario.expect(command("p").chat)
+          chat      <- Scenario.expect(command("l").chat)
           token     <- Scenario.eval(tokenStore.get)
           positions <- Scenario.eval(
                          positions(token)
@@ -40,7 +40,7 @@ object DisplayPositions {
                        )
           _         <- Scenario.eval(chat.send(positions.mkString("\n")))
         } yield ()
-      } else Scenario.expect(command("i").chat).flatMap(chat => Scenario.eval(chat.send("run /s - command"))) >> Scenario.done
+      } else Scenario.expect(command("l").chat).flatMap(chat => Scenario.eval(chat.send("run /s - command"))) >> Scenario.done
     }
 
   }

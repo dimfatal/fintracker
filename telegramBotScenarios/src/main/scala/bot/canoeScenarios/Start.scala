@@ -26,7 +26,7 @@ object Start {
       _            <- Scenario.eval(tokenStore.save(tokenMessage.text))
       _            <- Scenario.eval(accountsMap(tokenMessage.text).attempt.map(
         _.fold(
-          er => Scenario.eval(chat.send("problem while trying to authorize, make sure the token you provided is valid ")) >> Scenario.done,// todo logging this error
+          _ => Scenario.eval(chat.send("problem while trying to authorize, make sure the token you provided is valid ")) >> Scenario.done,// todo logging this error
           acc => Scenario.eval(accountStore.save(acc.a)) >> Scenario.eval(tokenMessage.delete) >> Scenario.eval(semaphore.release)
         )
       )
@@ -36,4 +36,22 @@ object Start {
 
     } yield ()
   }
+}
+
+object Help {
+  def run[F[_]: Sync: TelegramClient](): Scenario[F, Unit] =
+    for {
+      chat <- Scenario.expect(command("h").chat)
+      _    <- Scenario.eval(chat.send(helpText))
+    } yield ()
+
+  val helpText: String =
+    """
+      |/h Shows help menu
+      |/a Shows available accounts
+      |/p [ticker] Check current profit of stock
+      |/l List current stock positions in your profile
+      |/i [ticker] List prices of stock in from your portfolio
+      |/t [ticker] Search instruments by ticker
+      |""".stripMargin
 }

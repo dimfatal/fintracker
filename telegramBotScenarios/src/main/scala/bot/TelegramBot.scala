@@ -33,7 +33,8 @@ object TelegramBot extends IOApp {
                     Accounts.sendAvailableAccounts(sem, accountStore),
                     CheckStockProfitFromPeriod.run(sem, tokenStore),
                     DisplayPositions.displayPositions(sem, tokenStore),
-                    DisplayStockPrices.run(sem, tokenStore)
+                    DisplayStockPrices.run(sem, tokenStore),
+                    HelpScenario.run
                     //  PrintFoundedInstrumentsFrom.printFoundedInstrumentsFrom(TinkoffInvest.marketInfo)
                   )
               }

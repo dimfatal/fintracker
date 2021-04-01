@@ -35,13 +35,13 @@ object CheckStockProfitFromPeriod {
 
     Scenario.eval(semaphore.available).flatMap { i =>
       if (i > 0) {
-        Scenario.expect(command("h").andThen(x => (x.chat, x.text.split(" ").tail))).flatMap { case (chat, param) =>
+        Scenario.expect(command("p").andThen(x => (x.chat, x.text.split(" ").tail))).flatMap { case (chat, param) =>
           for {
             token <- Scenario.eval(tokenStore.get)
             _     <- Scenario.eval(calculate(chat, param, token)(serviceFromTicker))
           } yield ()
         }
-      } else Scenario.expect(command("h").chat).flatMap(chat => Scenario.eval(chat.send("run /s - command"))) >> Scenario.done
+      } else Scenario.expect(command("p").chat).flatMap(chat => Scenario.eval(chat.send("run /s - command"))) >> Scenario.done
     }
   }
 
