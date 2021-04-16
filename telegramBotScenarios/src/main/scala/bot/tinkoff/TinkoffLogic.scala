@@ -2,6 +2,7 @@ package bot.tinkoff
 
 import bot.inMemoryStorage.InMemoryAccountsStorage
 import bot.{BotLogic, BotLogicInterpreter}
+import cats.Functor
 import cats.effect.Sync
 import fs2.Stream
 import org.http4s.client.Client
@@ -13,7 +14,7 @@ import tcsInterpreters.portfolioInfo.PeriodQuery
 
 final case class AccountsMap(a: Map[AccountType, String])
 final case class PositionsList(a: List[String])
-final case class StockProfitMap(a: Map[MarketInstrument, String]) //todo should make it extend anyval ??
+final case class StockProfitMap(items: Map[MarketInstrument, String]) //todo should make it extend anyval ??
 final case class StockPrices(a: String)
 
 object TinkoffInvestPrograms {
@@ -46,9 +47,6 @@ object TinkoffInvestPrograms {
   }
 
   class TinkoffService[G: TinkoffInvestLogic] {
-    def run[F[_]: Client: Sync: InMemoryAccountsStorage](token: String): Stream[F, G] = {
-      implicit val c: TinkoffClient[F] = Http4sTinkoffClientBuilder.fromHttp4sClient[F](token)(implicitly[Client[F]])
-      TinkoffInvestLogic[G].run(BotLogicInterpreter[F])
-    }
+    def run[F[_]: TinkoffClient: InMemoryAccountsStorage: Functor]: Stream[F, G] = TinkoffInvestLogic[G].run(BotLogicInterpreter[F])
   }
 }

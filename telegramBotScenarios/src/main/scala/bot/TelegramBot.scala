@@ -1,10 +1,10 @@
 package bot
 
-import bot.inMemoryStorage.{InMemoryAccountsStorage, TokenStorage}
+import bot.inMemoryStorage.{ InMemoryAccountsStorage, TokenStorage }
 import bot.canoeScenarios._
-import canoe.api.{Bot, TelegramClient}
+import canoe.api.{ Bot, TelegramClient }
 import cats.effect.concurrent.Semaphore
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{ ExitCode, IO, IOApp }
 import fs2.Stream
 import org.http4s.client.blaze.BlazeClientBuilder
 
@@ -33,9 +33,7 @@ object TelegramBot extends IOApp {
                     Accounts.sendAvailableAccounts(sem, accountStore),
                     CheckStockProfitFromPeriod.run(sem, tokenStore),
                     DisplayPositions.displayPositions(sem, tokenStore),
-                    DisplayStockPrices.run(sem, tokenStore),
                     Help.run
-                    //  PrintFoundedInstrumentsFrom.printFoundedInstrumentsFrom(TinkoffInvest.marketInfo)
                   )
               }
             }

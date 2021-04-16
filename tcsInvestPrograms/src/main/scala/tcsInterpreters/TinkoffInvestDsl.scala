@@ -1,13 +1,14 @@
 package tcsInterpreters
 
+import cats.Functor
 import cats.effect.Sync
 import fs2._
 import tcs4sclient.api.client._
-import tcs4sclient.api.methods.{ MarketInstrumentsApi, TinkoffInvestApi }
+import tcs4sclient.api.methods.{MarketInstrumentsApi, TinkoffInvestApi}
 import tcs4sclient.model.domain.MarketInstruments
-import tcs4sclient.model.domain.market.{ Figi, Ticker }
+import tcs4sclient.model.domain.market.{Figi, Ticker}
 import tcs4sclient.model.domain.user.AccountType
-import tcsInterpreters.portfolioInfo.{ AccountsMap, PeriodQuery, PortfolioStockPrices, PortfolioStockProfit }
+import tcsInterpreters.portfolioInfo.{AccountsMap, PeriodQuery, PortfolioStockPrices, PortfolioStockProfit}
 
 trait TinkoffInvestPrograms[F[_], S[_]] {
   def accountsMap: S[Map[AccountType, String]]
@@ -24,7 +25,7 @@ trait TinkoffMarketInfo[F[_]] {
 
 object TinkoffInvest {
 
-  def dsl[F[_]: TinkoffClient: Sync]: StreamingTinkoffInvest[F] =
+  def dsl[F[_]: TinkoffClient: Functor]: StreamingTinkoffInvest[F] =
     new StreamingTinkoffInvest[F] {
 
       import tcs4sclient.api.methods.TinkoffInvestApi._

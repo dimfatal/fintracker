@@ -4,6 +4,7 @@ import bot.canoeScenarios.validation.{CommandParameter, CommandParameterValidati
 import canoe.api.{Scenario, TelegramClient, chatApi}
 import canoe.models.Chat
 import canoe.syntax._
+import cats.{Applicative, Functor}
 import cats.effect.Sync
 import cats.implicits._
 import tcs4sclient.model.domain.user.AccountType
@@ -35,15 +36,17 @@ object ScenariosLogicInterpreter {
   //   override def findMarketInstrumentsByTicker: Scenario[F, Unit] = ???
   // }
 
-  private implicit val commandValidator: CommandParameterValidator[Either[CommandParameterValidation, *]] =
-    CommandParameterValidatorInterpreter.commandValidator[Either[CommandParameterValidation, *], CommandParameterValidation](identity)
+//  private implicit val commandValidator: CommandParameterValidator[Either[CommandParameterValidation, *]] =
+//    CommandParameterValidatorInterpreter.commandValidator[Either[CommandParameterValidation, *], CommandParameterValidation](identity)
+//
 
-  def checkParam[F[_]: Sync: TelegramClient](chat: Chat, param: Array[String]): F[Either[CommandParameterValidation, CommandParameter]] =
-    if (param.nonEmpty) {
-      Sync[F].delay(CommandParameterValidator.validate(CommandParameter(param, 1)))
-    } else
-      chat
-        .send("enter ticker which you want to check")
-        .map(tickerMessage => CommandParameterValidator.validate(CommandParameter(tickerMessage.text.split(" "), expectedCount = 1)))
+
+//  def checkParam[F[_]: Applicative: TelegramClient](chat: Chat, param: Array[String]): F[Either[CommandParameterValidation, CommandParameter]] =
+//    if (param.nonEmpty) {
+//      CommandParameterValidator.validate(CommandParameter(param, 1)).pure[F]
+//    } else
+//      chat
+//        .send("enter ticker which you want to check")
+//        .map(tickerMessage => CommandParameterValidator.validate(CommandParameter(tickerMessage.text.split(" "), expectedCount = 1)))
 
 }

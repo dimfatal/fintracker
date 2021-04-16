@@ -1,6 +1,6 @@
 package bot.canoeScenarios
 
-import canoe.api.{Scenario, TelegramClient, chatApi}
+import canoe.api.{ chatApi, Scenario, TelegramClient }
 import canoe.syntax._
 import cats.effect.Sync
 
@@ -17,7 +17,5 @@ object Help {
       |/a Shows available accounts
       |/p [ticker] Check current profit of stock
       |/l List current stock positions in your profile
-      |/i [ticker] List prices of stock in from your portfolio
-      |/t [ticker] Search instruments by ticker
       |""".stripMargin
 }

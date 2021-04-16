@@ -3,6 +3,7 @@ package bot
 import bot.inMemoryStorage.InMemoryAccountsStorage
 import bot.tinkoff.{AccountsMap, PositionsList, StockPrices, StockProfitMap}
 import canoe.api.Scenario
+import cats.Functor
 import cats.effect.Sync
 import cats.implicits._
 import fs2.Stream
@@ -23,7 +24,7 @@ trait BotLogic[F[_]] {
 }
 
 object BotLogicInterpreter {
-  def apply[F[_]: Sync: TinkoffClient: InMemoryAccountsStorage]: BotLogic[F] = new BotLogic[F] {
+  def apply[F[_]: TinkoffClient: InMemoryAccountsStorage: Functor]: BotLogic[F] = new BotLogic[F] {
 
     import fs2.Stream
     override def start: Scenario[F, Unit] = ???
