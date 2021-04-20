@@ -1,12 +1,6 @@
 package bot.canoeScenarios
 
-import bot.canoeScenarios.validation.{CommandParameter, CommandParameterValidation, CommandParameterValidator, CommandParameterValidatorInterpreter}
-import canoe.api.{Scenario, TelegramClient, chatApi}
-import canoe.models.Chat
-import canoe.syntax._
-import cats.{Applicative, Functor}
-import cats.effect.Sync
-import cats.implicits._
+import canoe.api.Scenario
 import tcs4sclient.model.domain.user.AccountType
 
 trait ScenarioLogic[F[_]] {
@@ -39,7 +33,6 @@ object ScenariosLogicInterpreter {
 //  private implicit val commandValidator: CommandParameterValidator[Either[CommandParameterValidation, *]] =
 //    CommandParameterValidatorInterpreter.commandValidator[Either[CommandParameterValidation, *], CommandParameterValidation](identity)
 //
-
 
 //  def checkParam[F[_]: Applicative: TelegramClient](chat: Chat, param: Array[String]): F[Either[CommandParameterValidation, CommandParameter]] =
 //    if (param.nonEmpty) {

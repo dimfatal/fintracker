@@ -1,16 +1,15 @@
 package bot
 
 import bot.inMemoryStorage.InMemoryAccountsStorage
-import bot.tinkoff.{AccountsMap, PositionsList, StockPrices, StockProfitMap}
+import bot.tinkoff.{ AccountsMap, PositionsList, StockPrices, StockProfitMap }
 import canoe.api.Scenario
 import cats.Functor
-import cats.effect.Sync
 import cats.implicits._
 import fs2.Stream
 import tcs4sclient.api.client.TinkoffClient
-import tcs4sclient.model.domain.market.{Figi, Ticker}
+import tcs4sclient.model.domain.market.{ Figi, Ticker }
 import tcsInterpreters.AccountId
-import tcsInterpreters.TinkoffInvest.{dsl, marketInfo}
+import tcsInterpreters.TinkoffInvest.{ dsl, marketInfo }
 import tcsInterpreters.portfolioInfo.DateTimePeriod.allTime
 import tcsInterpreters.portfolioInfo.PeriodQuery
 

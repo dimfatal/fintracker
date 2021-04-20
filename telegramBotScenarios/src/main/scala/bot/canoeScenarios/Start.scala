@@ -1,16 +1,16 @@
 package bot.canoeScenarios
 
-import bot.inMemoryStorage.{InMemoryAccountsStorage, TinkoffTokenStorage}
+import bot.inMemoryStorage.{ InMemoryAccountsStorage, TinkoffTokenStorage }
 import bot.tinkoff.AccountsMap
 import bot.tinkoff.TinkoffInvestPrograms.TinkoffService
-import canoe.syntax.{command, textMessage}
-import canoe.api.{Scenario, TelegramClient, chatApi, messageApi}
+import canoe.syntax.{ command, textMessage }
+import canoe.api.{ chatApi, messageApi, Scenario, TelegramClient }
 import canoe.syntax._
 import cats.effect.Sync
 import cats.effect.concurrent.Semaphore
 import org.http4s.client.Client
 import cats.implicits._
-import tcs4sclient.api.client.{Http4sTinkoffClientBuilder, TinkoffClient}
+import tcs4sclient.api.client.{ Http4sTinkoffClientBuilder, TinkoffClient }
 
 object Start {
 
@@ -18,7 +18,7 @@ object Start {
     accountStore: InMemoryAccountsStorage[F]
   ): Scenario[F, Unit] = {
 
-    def tinkoffClient(token: String): TinkoffClient[F] = Http4sTinkoffClientBuilder.fromHttp4sClient(token)(implicitly[Client[F]])
+    def tinkoffClient(token: String): TinkoffClient[F]        = Http4sTinkoffClientBuilder.fromHttp4sClient(token)(implicitly[Client[F]])
     def accountsMap(implicit tinkoffClient: TinkoffClient[F]) = new TinkoffService[AccountsMap].run
 
     for {
@@ -28,7 +28,11 @@ object Start {
       _            <- Scenario.eval(tokenStore.save(tokenMessage.text))
       _            <- Scenario
                         .eval(
-                          fs2.Stream.eval(tinkoffClient(tokenMessage.text).pure[F]).map(implicit c => accountsMap).flatten
+                          fs2
+                            .Stream
+                            .eval(tinkoffClient(tokenMessage.text).pure[F])
+                            .map(implicit c => accountsMap)
+                            .flatten
                             .attempt
                             .map(
                               _.fold(

@@ -1,13 +1,11 @@
 package bot.tinkoff
 
 import bot.inMemoryStorage.InMemoryAccountsStorage
-import bot.{BotLogic, BotLogicInterpreter}
+import bot.{ BotLogic, BotLogicInterpreter }
 import cats.Functor
-import cats.effect.Sync
 import fs2.Stream
-import org.http4s.client.Client
-import tcs4sclient.api.client.{Http4sTinkoffClientBuilder, TinkoffClient}
-import tcs4sclient.model.domain.market.{MarketInstrument, Ticker}
+import tcs4sclient.api.client.TinkoffClient
+import tcs4sclient.model.domain.market.{ MarketInstrument, Ticker }
 import tcs4sclient.model.domain.user.AccountType
 import tcsInterpreters.AccountId
 import tcsInterpreters.portfolioInfo.PeriodQuery

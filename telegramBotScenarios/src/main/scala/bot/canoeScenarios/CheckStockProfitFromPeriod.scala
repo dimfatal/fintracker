@@ -2,9 +2,9 @@ package bot.canoeScenarios
 
 import bot.canoeScenarios.validation._
 import bot.inMemoryStorage.AccountTypeStorageSyntax.AccountTypeIdOps
-import bot.inMemoryStorage.{InMemoryAccountsStorage, TinkoffTokenStorage}
+import bot.inMemoryStorage.{ InMemoryAccountsStorage, TinkoffTokenStorage }
 import bot.tinkoff.StockProfitMap
-import bot.tinkoff.TinkoffInvestPrograms.{TinkoffInvestLogic, TinkoffService}
+import bot.tinkoff.TinkoffInvestPrograms.{ TinkoffInvestLogic, TinkoffService }
 import canoe.api._
 import canoe.models.Chat
 import canoe.syntax._
@@ -13,15 +13,15 @@ import cats.effect.Sync
 import cats.effect.concurrent.Semaphore
 import cats.implicits._
 import org.http4s.client.Client
-import tcs4sclient.api.client.{Http4sTinkoffClientBuilder, TinkoffClient}
-import tcs4sclient.model.domain.market.{MarketInstrument, Ticker}
-import tcs4sclient.model.domain.user.{AccountType, Tinkoff}
+import tcs4sclient.api.client.{ Http4sTinkoffClientBuilder, TinkoffClient }
+import tcs4sclient.model.domain.market.{ MarketInstrument, Ticker }
+import tcs4sclient.model.domain.user.{ AccountType, Tinkoff }
 import tcsInterpreters.portfolioInfo.DateTimePeriod.allTime
 import tcsInterpreters.portfolioInfo.PeriodQuery
 
 object CheckStockProfitFromPeriod {
 
-  private implicit val tickerValidator: TickerValidator[Either[TickerValidation, *]] =
+  private implicit val tickerValidator: TickerValidator[Either[TickerValidation, *]]                      =
     TickerValidatorInterpreter.tickerValidator[Either[TickerValidation, *], TickerValidation](identity)
   private implicit val commandValidator: CommandParameterValidator[Either[CommandParameterValidation, *]] =
     CommandParameterValidatorInterpreter.commandValidator[Either[CommandParameterValidation, *], CommandParameterValidation](identity)
@@ -34,7 +34,9 @@ object CheckStockProfitFromPeriod {
   ): Scenario[F, Unit] = {
 
     def stockProfitService(ticker: Ticker)(implicit client: TinkoffClient[F]): F[fs2.Stream[F, StockProfitMap]] =
-      account.id.map(TinkoffInvestLogic.stockProfit(_, ticker, periodQuery))
+      account
+        .id
+        .map(TinkoffInvestLogic.stockProfit(_, ticker, periodQuery))
         .map(implicit i => new TinkoffService[StockProfitMap].run)
 
     def tinkoffClient(token: String): TinkoffClient[F] = Http4sTinkoffClientBuilder.fromHttp4sClient(token)(implicitly[Client[F]])
@@ -42,59 +44,67 @@ object CheckStockProfitFromPeriod {
     Scenario.eval(semaphore.available).flatMap { i =>
       if (i > 0) {
         Scenario.expect(command("p").andThen(x => (x.chat, x.text.split(" ").tail))).flatMap { case (chat, param) =>
-            Scenario.eval(tokenStore.get.map(tinkoffClient)).flatMap(implicit c =>
-              Scenario.eval(calculate(chat, param)(stockProfitService)))
+          Scenario.eval(tokenStore.get.map(tinkoffClient)).flatMap(implicit c => calculate(chat, param)(stockProfitService))
         }
       } else Scenario.expect(command("p").chat).flatMap(chat => Scenario.eval(chat.send("run /s - command"))) >> Scenario.done
     }
   }
 
-  private def calculate[F[_]: Sync: TinkoffClient:TelegramClient: InMemoryAccountsStorage](chat: Chat, userInput: Array[String])( //todo how resolve it with MonadError ???
+  private def calculate[F[_]: Sync: TinkoffClient: TelegramClient: InMemoryAccountsStorage](
+    chat: Chat,
+    userInput: Array[String]
+  )( //todo how resolve it with MonadError ???
     service: Ticker => F[fs2.Stream[F, StockProfitMap]]
-  ): F[Unit] = {
-    CommandParameterValidator.validate(CommandParameter(userInput, expectedCount = 1)).fold(
-        e => e match {
-          case CommandParameterExpectedCount => chat.send(s"invalid parameter ${CommandParameterExpectedCount.errorMessage}").map(_ => ())
-          case CommandParameterExistValidation => chat.send("enter ticker which you want to check")
-            .map(tickerMessage => calculate[F](chat, tickerMessage.text.split(" "))).map(_ => ())
-        },
+  ): Scenario[F,Unit] =
+    CommandParameterValidator
+      .validate(CommandParameter(userInput, expectedCount = 1))
+      .fold(
+        e =>
+          e match {
+            case CommandParameterExistValidation =>
+              Scenario.eval(chat
+                .send("enter ticker which you want to check"))
+                .flatMap { _ =>
+                  Scenario.expect(textMessage)}
+                .flatMap(tickerMessage => calculate[F](chat, tickerMessage.text.split(" "))(service))
+
+
+            case CommandParameterExpectedCount   => Scenario.eval(chat.send(s"invalid parameter ${CommandParameterExpectedCount.errorMessage}").map(_ => ()))
+
+          },
         cmd =>
-          TickerValidator.validate(Ticker(cmd.args.last)).value
+          Scenario.eval(TickerValidator
+            .validate(Ticker(cmd.args.last))
+            .value
             .map(
               _.fold(
-                e => chat.send(s"invalid ticker - ${e.errorMessages}").map(_ => ()),
+                e => Scenario.eval(chat.send(s"invalid ticker - ${e.errorMessages}").map(_ => ())),
                 validTicker =>
-                {
-                  fs2.Stream
-                    .eval(service(validTicker)).flatten
-                    .evalMap(
-                      marketInstrumentMap => askWhichInstrumentShouldBeTaken[F](marketInstrumentMap.items, chat)
-                    )
-                    .map(m => chat.send(m))
-                    .compile.drain
-                }
+                  Scenario.eval(
+                    fs2.Stream.eval(service(validTicker))
+                      .flatten.compile
+                      .toList.map(_.head))
+                    .flatMap(marketInstrumentMap => askWhichInstrumentShouldBeTaken[F](marketInstrumentMap.items, chat))
+                    .flatMap(result => Scenario.eval(chat.send(result)))
+                    .flatMap(_ => Scenario.done)
               )
             )
-            .flatten
+          ).flatten
       )
-  }
 
-  def askWhichInstrumentShouldBeTaken[F[_]: Applicative: TelegramClient](instruments: Map[MarketInstrument, String], chat: Chat): F[String] =
+  def askWhichInstrumentShouldBeTaken[F[_]: Applicative: TelegramClient](instruments: Map[MarketInstrument, String], chat: Chat): Scenario[F, String] =
     if (instruments.keys.size > 1) {
-      chat
+      Scenario.eval(chat
         .send(s"send index of instrument you want to check - ${instruments.keys.map(_.name).zipWithIndex.map { case (element, index) =>
           s" $index -> $element"
-        }}")
-        .map(message =>
+        }}")) >> Scenario.expect(textMessage).map(message =>
           message
             .text
             .toIntOption
             .flatMap(index => instruments.keys.toList.get(index))
             .map(instruments)
-            .getOrElse("error profit")
+            .getOrElse("wrong index")
         )
-    } else instruments.last._2.pure[F]
-
-
+    } else Scenario.eval(instruments.last._2.pure[F])
 
 }
