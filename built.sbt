@@ -7,7 +7,8 @@ lazy val telegramBotScenarios = project
     name := "telegram-bot",
     projectSettings,
     compilerOptions,
-    baseDependencies)
+    baseDependencies,
+    mtl)
   .settings(libraryDependencies += canoeTelegram)
   .settings(tests)
   .dependsOn(tcsInvestPrograms)
@@ -49,6 +50,8 @@ lazy val `fintracker` = project.in(file("."))
     telegramBotScenarios
   )
 
+val mtl = libraryDependencies ++= Seq(meowMtl,meowMtlEffect)
+
 val baseDependencies = libraryDependencies ++= Seq(slf4jSimple, fs2core, catsCore, catsEffect)
 
 val circe = libraryDependencies ++= Seq(circeCore, circeGeneric, circeParser)
@@ -62,9 +65,9 @@ lazy val tests = {
   val dependencies =
     libraryDependencies ++= Seq(
       "org.scalatest"              %% "scalatest"                 % scalatestVersion,
-//      "org.typelevel"              %% "cats-laws"                 % catsLawsVersion,
-//      "org.typelevel"              %% "discipline-scalatest"      % disciplineVersion,
-//      "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % scalacheckShapelessVersion
+      //      "org.typelevel"              %% "cats-laws"                 % catsLawsVersion,
+      //      "org.typelevel"              %% "discipline-scalatest"      % disciplineVersion,
+      //      "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % scalacheckShapelessVersion
     ).map(_ % Test)
 
   val frameworks =

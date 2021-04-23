@@ -55,49 +55,69 @@ object CheckStockProfitFromPeriod {
     userInput: Array[String]
   )( //todo how resolve it with MonadError ???
     service: Ticker => F[fs2.Stream[F, StockProfitMap]]
-  ): Scenario[F,Unit] =
+  ): Scenario[F, Unit] =
     CommandParameterValidator
       .validate(CommandParameter(userInput, expectedCount = 1))
       .fold(
         e =>
           e match {
             case CommandParameterExistValidation =>
-              Scenario.eval(chat
-                .send("enter ticker which you want to check"))
+              Scenario
+                .eval(
+                  chat
+                    .send("enter ticker which you want to check")
+                )
                 .flatMap { _ =>
-                  Scenario.expect(textMessage)}
+                  Scenario.expect(textMessage)
+                }
                 .flatMap(tickerMessage => calculate[F](chat, tickerMessage.text.split(" "))(service))
 
-
-            case CommandParameterExpectedCount   => Scenario.eval(chat.send(s"invalid parameter ${CommandParameterExpectedCount.errorMessage}").map(_ => ()))
+            case CommandParameterExpectedCount =>
+              Scenario.eval(chat.send(s"invalid parameter ${CommandParameterExpectedCount.errorMessage}").map(_ => ()))
 
           },
         cmd =>
-          Scenario.eval(TickerValidator
-            .validate(Ticker(cmd.args.last))
-            .value
-            .map(
-              _.fold(
-                e => Scenario.eval(chat.send(s"invalid ticker - ${e.errorMessages}").map(_ => ())),
-                validTicker =>
-                  Scenario.eval(
-                    fs2.Stream.eval(service(validTicker))
-                      .flatten.compile
-                      .toList.map(_.head))
-                    .flatMap(marketInstrumentMap => askWhichInstrumentShouldBeTaken[F](marketInstrumentMap.items, chat))
-                    .flatMap(result => Scenario.eval(chat.send(result)))
-                    .flatMap(_ => Scenario.done)
-              )
+          Scenario
+            .eval(
+              TickerValidator
+                .validate(Ticker(cmd.args.last))
+                .value
+                .map(
+                  _.fold(
+                    e => Scenario.eval(chat.send(s"invalid ticker - ${e.errorMessages}").map(_ => ())),
+                    validTicker =>
+                      Scenario
+                        .eval(
+                          fs2
+                            .Stream
+                            .eval(service(validTicker))
+                            .flatten
+                            .compile
+                            .toList
+                            .map(_.head)
+                        )
+                        .flatMap(marketInstrumentMap => askWhichInstrumentShouldBeTaken[F](marketInstrumentMap.items, chat))
+                        .flatMap(result => Scenario.eval(chat.send(result)))
+                        .flatMap(_ => Scenario.done)
+                  )
+                )
             )
-          ).flatten
+            .flatten
       )
 
-  def askWhichInstrumentShouldBeTaken[F[_]: Applicative: TelegramClient](instruments: Map[MarketInstrument, String], chat: Chat): Scenario[F, String] =
+  def askWhichInstrumentShouldBeTaken[F[_]: Applicative: TelegramClient](
+    instruments: Map[MarketInstrument, String],
+    chat: Chat
+  ): Scenario[F, String] =
     if (instruments.keys.size > 1) {
-      Scenario.eval(chat
-        .send(s"send index of instrument you want to check - ${instruments.keys.map(_.name).zipWithIndex.map { case (element, index) =>
-          s" $index -> $element"
-        }}")) >> Scenario.expect(textMessage).map(message =>
+      Scenario.eval(
+        chat
+          .send(s"send index of instrument you want to check - ${instruments.keys.map(_.name).zipWithIndex.map { case (element, index) =>
+            s" $index -> $element"
+          }}")
+      ) >> Scenario
+        .expect(textMessage)
+        .map(message =>
           message
             .text
             .toIntOption
@@ -106,5 +126,4 @@ object CheckStockProfitFromPeriod {
             .getOrElse("wrong index")
         )
     } else Scenario.eval(instruments.last._2.pure[F])
-
 }

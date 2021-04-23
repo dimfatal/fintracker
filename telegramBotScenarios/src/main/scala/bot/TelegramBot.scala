@@ -2,6 +2,7 @@ package bot
 
 import bot.inMemoryStorage.{ InMemoryAccountsStorage, TokenStorage }
 import bot.canoeScenarios._
+import bot.canoeScenarios.scenarioMtl.CheckStockProfitMtl
 import canoe.api.{ Bot, TelegramClient }
 import cats.effect.concurrent.Semaphore
 import cats.effect.{ ExitCode, IO, IOApp }
@@ -31,7 +32,7 @@ object TelegramBot extends IOApp {
                   .follow(
                     Start.startUpScenario(sem, tokenStore),
                     Accounts.sendAvailableAccounts(sem, accountStore),
-                    CheckStockProfitFromPeriod.run(sem, tokenStore),
+                    new CheckStockProfitMtl(tokenStore).runIfAvailable(sem),
                     DisplayPositions.displayPositions(sem, tokenStore),
                     Help.run
                   )
