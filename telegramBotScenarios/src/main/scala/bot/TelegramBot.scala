@@ -2,7 +2,7 @@ package bot
 
 import bot.inMemoryStorage.{ InMemoryAccountsStorage, TokenStorage }
 import bot.canoeScenarios._
-import bot.canoeScenarios.scenarioMtl.CheckStockProfitMtl
+import bot.canoeScenarios.scenarioMtl.CheckStockProfitScenario
 import canoe.api.{ Bot, TelegramClient }
 import cats.effect.concurrent.Semaphore
 import cats.effect.{ ExitCode, IO, IOApp }
@@ -13,7 +13,7 @@ import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 
 object TelegramBot extends IOApp {
-  private def telegramBotToken: String = System.getenv("BOT_TOKEN")
+  private def telegramBotToken: String = "1498629531:AAFzR4eASsMmk0ia8h3j7QWJbVAOqL4585A" //System.getenv("BOT_TOKEN")
 
   override def run(args: List[String]): IO[ExitCode] = {
 
@@ -32,7 +32,7 @@ object TelegramBot extends IOApp {
                   .follow(
                     Start.startUpScenario(sem, tokenStore),
                     Accounts.sendAvailableAccounts(sem, accountStore),
-                    new CheckStockProfitMtl(tokenStore).runIfAvailable(sem),
+                    new CheckStockProfitScenario(tokenStore).runIfAvailable(sem),
                     DisplayPositions.displayPositions(sem, tokenStore),
                     Help.run
                   )

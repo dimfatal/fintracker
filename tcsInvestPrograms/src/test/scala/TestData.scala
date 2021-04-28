@@ -1,9 +1,7 @@
-package tcsInterpreters
-
-import tcs4sclient.model.domain.{ TcsResponse, TradeHistory }
 import io.circe.parser.decode
 import tcs4sclient.model.domain.user.operations.Operation
 import tcs4sclient.model.domain.user.operations.OperationDecoder.decoderOperations
+import tcs4sclient.model.domain.{TcsResponse, TradeHistory}
 
 /*object TestJson {
   /*private val rawJson: String =

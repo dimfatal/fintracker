@@ -1,9 +1,8 @@
 package bot.canoeScenarios
 
-import bot.inMemoryStorage.AccountTypeStorageSyntax.AccountTypeIdOps
-import bot.inMemoryStorage.{ InMemoryAccountsStorage, TinkoffTokenStorage }
-import bot.tinkoff.{ PositionsList, TinkoffInvestPrograms }
-import bot.tinkoff.TinkoffInvestPrograms.TinkoffService
+import bot.inMemoryStorage.AccountTypeStorageSyntax._
+import bot.inMemoryStorage._
+import bot.tinkoff.TinkoffInvestService
 import canoe.api.{ chatApi, Scenario, TelegramClient }
 import canoe.syntax._
 import cats.effect.Sync
@@ -13,6 +12,7 @@ import fs2.Stream
 import org.http4s.client.Client
 import tcs4sclient.api.client.{ Http4sTinkoffClientBuilder, TinkoffClient }
 import tcs4sclient.model.domain.user.{ AccountType, Tinkoff }
+import tcsInterpreters.PositionsInfo
 
 object DisplayPositions {
 
@@ -24,26 +24,28 @@ object DisplayPositions {
 
     def tinkoffClient(token: String): TinkoffClient[F]      = Http4sTinkoffClientBuilder.fromHttp4sClient(token)(implicitly[Client[F]])
     def positions(implicit tinkoffClient: TinkoffClient[F]) =
-      Stream
-        .eval(account.id)
-        .map(TinkoffInvestPrograms.TinkoffInvestLogic.positionsList)
-        .map(implicit logic => new TinkoffService[PositionsList].run.map(_.a))
-        .flatten
+      account
+        .findId
+        .map(id => new TinkoffInvestService[PositionsInfo].make.display(id))
 
     Scenario.eval(semaphore.available).flatMap { i =>
       if (i > 0) {
         for {
           chat      <- Scenario.expect(command("l").chat)
           positions <- Scenario.eval(
-                         Stream
+                         Stream //todo refactor needed
                            .eval(tokenStore.get)
                            .map(tinkoffClient)
-                           .map(implicit c => positions)
-                           .flatten
+                           .map { d =>
+                             positions(d).value.map(_.sequence).flatten
+                           }
                            .compile
-                           .foldMonoid
+                           .toList
+                           .map(_.sequence)
+                           .flatten
+                           .map(_.sequence.map(_.flatten))
                        )
-          _         <- Scenario.eval(chat.send(positions.mkString("\n")))
+          _         <- Scenario.eval(chat.send(positions.fold("")(_.mkString("\n"))))
         } yield ()
       } else Scenario.expect(command("l").chat).flatMap(chat => Scenario.eval(chat.send("run /s - command"))) >> Scenario.done
     }

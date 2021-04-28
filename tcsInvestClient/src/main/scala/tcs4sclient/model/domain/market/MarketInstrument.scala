@@ -16,8 +16,8 @@ final case class MarketInstrument(
 )
 
 sealed trait InstrumentId
-final case class Figi(id: String)   extends InstrumentId
-final case class Ticker(id: String) extends InstrumentId
+final case class Figi(id: String)     extends InstrumentId
+final case class Ticker(name: String) extends InstrumentId
 
 object MarketInstrument {
   implicit val decoderMarketInstrument: Decoder[MarketInstrument]   = deriveDecoder[MarketInstrument]
