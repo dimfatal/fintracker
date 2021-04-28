@@ -13,7 +13,7 @@ import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 
 object TelegramBot extends IOApp {
-  private def telegramBotToken: String = "1498629531:AAFzR4eASsMmk0ia8h3j7QWJbVAOqL4585A" //System.getenv("BOT_TOKEN")
+  private def telegramBotToken: String = System.getenv("BOT_TOKEN")
 
   override def run(args: List[String]): IO[ExitCode] = {
 
